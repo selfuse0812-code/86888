@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兵役與學歷年次對照表 2.0</title>
+    <style>
+        :root { --primary-color: #2c3e50; --accent-color: #27ae60; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 700px; width: 100%; }
+        h2 { color: var(--primary-color); text-align: center; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
+        .controls { display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 10px; margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; }
+        button { background-color: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        button:hover { background-color: #219150; }
+        .info-box { background: #eef9f2; border-left: 5px solid var(--accent-color); padding: 15px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background-color: var(--primary-color); color: white; position: sticky; top: 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin: 1px; font-weight: bold; }
+        .tag-edu { background-color: #3498db; color: white; }
+        .tag-mil { background-color: #e67e22; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>台灣兵役及學齡查詢系統</h2>
+    
+    <div class="controls">
+        <input type="number" id="currentYear" value="115" placeholder="民國年" autofocus>
+        <select id="rank">
+            <option value="36">一般義務役士兵 (36歲)</option>
+            <option value="45">志願役士兵 (45歲)</option>
+            <option value="50">尉官、士官 (50歲)</option>
+            <option value="58">校官、士官長 (58歲)</option>
+            <option value="60">少將 (60歲)</option>
+        </select>
+        <button onclick="calculate()">查詢</button>
+    </div>
+
+    <div id="results" style="display:none;">
+        <div class="info-box" id="summary"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>民國年次</th>
+                    <th>年齡</th>
+                    <th>目前的階段 (預計)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 支援按下 Enter 鍵查詢
+    document.getElementById('currentYear').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') calculate();
+    });
+
+    function getEduStatus(age) {
+        let status = [];
+        if (age >= 18 && age <= 22) status.push('<span class="tag tag-edu">大學就讀</span>');
+        if (age >= 22 && age <= 24) status.push('<span class="tag tag-edu">碩士就讀</span>');
+        if (age >= 24 && age <= 28) status.push('<span class="tag tag-edu">博士就讀</span>');
+        if (age === 19) status.push('<span class="tag tag-mil">起役(19歲)</span>');
+        return status.join(' ');
+    }
+
+    function calculate() {
+        const currentYear = parseInt(document.getElementById('currentYear').value);
+        const retireAge = parseInt(document.getElementById('rank').value);
+        const tableBody = document.getElementById('tableBody');
+        const summary = document.getElementById('summary');
+        
+        if (!currentYear || currentYear < 1) {
+            alert("請輸入有效的民國年份！");
+            return;
+        }
+
+        tableBody.innerHTML = "";
+        document.getElementById('results').style.display = "block";
+
+        const startBirth = currentYear - retireAge;
+        const endBirth = currentYear - 18;
+
+        summary.innerHTML = `在民國 <b>${currentYear}</b> 年：<br>` +
+                            `• 最年長後備役：<b>${startBirth}</b> 年次 (於今年底滿 ${retireAge} 歲除役)<br>` +
+                            `• 最年輕起役男：<b>${currentYear-19}</b> 年次 (於今年 1/1 起役)`;
+
+        // 從 18 歲列到 除役年齡
+        for (let age = 18; age <= retireAge; age++) {
+            const birthYear = currentYear - age;
+            const row = document.createElement('tr');
+            
+            // 標記除役那一列
+            if (age === retireAge) row.style.backgroundColor = "#fff3cd";
+
+            row.innerHTML = `
+                <td>民國 ${birthYear} 年次</td>
+                <td>${age} 歲</td>
+                <td style="text-align:left;">${getEduStatus(age)} ${age === retireAge ? '<span class="tag tag-mil">正式除役</span>' : ''}</td>
+            `;
+            tableBody.appendChild(row);
+        }
+    }
+</script>
+
+</body>
+</html>
